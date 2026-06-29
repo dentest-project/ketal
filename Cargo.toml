@@ -5,9 +5,11 @@ edition = "2024"
 
 [dependencies]
 argon2 = "0.5"
+aws-config = "1"
+aws-sdk-sesv2 = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
 dotenvy = "0.15"
-jsonrpc-usecase = { git = "https://github.com/pierrerolland/jsonrpc-usecase", features = ["axum"] }
+jsonrpc-usecase = { git = "https://github.com/pierrerolland/jsonrpc-usecase", features = ["axum"], version = "0.4.0" }
 rand_core = { version = "0.6", features = ["getrandom"] }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"

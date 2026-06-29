@@ -1,7 +1,7 @@
 mod database;
-mod infrastructure;
 
 pub mod business;
+pub mod infrastructure;
 
 use jsonrpc_usecase::{JsonRpcService, RegistrationError};
 
