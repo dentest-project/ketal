@@ -1,0 +1,89 @@
+{
+  "openrpc": "1.3.2",
+  "info": {
+    "title": "Dentest Ketal JSON-RPC Documentation",
+    "version": "0.1.0"
+  },
+  "methods": [
+    {
+      "name": "Register",
+      "summary": "Register a new user.",
+      "params": [
+        {
+          "name": "username",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The public username for the account."
+          }
+        },
+        {
+          "name": "email",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "The email address used to identify and contact the account."
+          }
+        },
+        {
+          "name": "password",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 8,
+            "maxLength": 64,
+            "description": "The plain-text password chosen for the account."
+          }
+        }
+      ],
+      "result": {
+        "name": "user",
+        "schema": {
+          "$ref": "#/components/schemas/UserDetailedOutput"
+        }
+      },
+      "errors": [
+        {
+          "code": 20001,
+          "message": "UserAlreadyExists"
+        },
+        {
+          "code": 20002,
+          "message": "GatewayError"
+        },
+        {
+          "code": 20003,
+          "message": "PasswordEncoderError"
+        }
+      ]
+    }
+  ],
+  "components": {
+    "schemas": {
+      "UserDetailedOutput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "username",
+          "email"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "username": {
+            "type": "string"
+          },
+          "email": {
+            "type": "string"
+          }
+        }
+      }
+    }
+  }
+}
