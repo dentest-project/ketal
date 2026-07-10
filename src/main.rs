@@ -1,12 +1,23 @@
-use axum::serve;
+use axum::{
+    http::{Method, header::CONTENT_TYPE},
+    serve,
+};
 use jsonrpc_usecase::axum as jsonrpc_axum;
-use ketal::{build_service, infrastructure::config::server_bind_address};
+use ketal::{
+    build_service,
+    infrastructure::config::{cors_allowed_origin, server_bind_address},
+};
 use tokio::net::TcpListener;
+use tower_http::cors::CorsLayer;
 
 #[tokio::main]
 async fn main() {
     let service = build_service().expect("service registration should succeed");
-    let app = jsonrpc_axum::router(service);
+    let cors = CorsLayer::new()
+        .allow_origin(cors_allowed_origin())
+        .allow_methods([Method::POST])
+        .allow_headers([CONTENT_TYPE]);
+    let app = jsonrpc_axum::router(service).layer(cors);
     let bind_addr = server_bind_address();
     let listener = TcpListener::bind(&bind_addr)
         .await
