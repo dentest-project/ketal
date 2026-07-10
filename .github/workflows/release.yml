@@ -21,7 +21,8 @@ jobs:
         run: |
           if [[ "$TAG_NAME" =~ ^v?[0-9]+\.[0-9]+\.[0-9]+(-[0-9A-Za-z.-]+)?(\+[0-9A-Za-z.-]+)?$ ]]; then
             echo "skip=false" >> "$GITHUB_OUTPUT"
-            echo "asset_name=ketal-${TAG_NAME}-x86_64-unknown-linux-gnu" >> "$GITHUB_OUTPUT"
+            echo "target=x86_64-unknown-linux-musl" >> "$GITHUB_OUTPUT"
+            echo "asset_name=ketal-${TAG_NAME}-x86_64-unknown-linux-musl" >> "$GITHUB_OUTPUT"
           else
             echo "skip=true" >> "$GITHUB_OUTPUT"
             echo "Tag '$TAG_NAME' is not a semver tag. Skipping release."
@@ -34,6 +35,12 @@ jobs:
       - name: Install Rust toolchain
         if: steps.validate.outputs.skip != 'true'
         uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ steps.validate.outputs.target }}
+
+      - name: Install musl toolchain
+        if: steps.validate.outputs.skip != 'true'
+        run: sudo apt-get update && sudo apt-get install -y musl-tools
 
       - name: Restore cargo cache
         if: steps.validate.outputs.skip != 'true'
@@ -41,11 +48,11 @@ jobs:
 
       - name: Build release binary
         if: steps.validate.outputs.skip != 'true'
-        run: cargo build --release --locked --bin ketal
+        run: cargo build --release --locked --target "${{ steps.validate.outputs.target }}" --bin ketal
 
       - name: Prepare release asset
         if: steps.validate.outputs.skip != 'true'
-        run: cp target/release/ketal "${{ steps.validate.outputs.asset_name }}"
+        run: cp "target/${{ steps.validate.outputs.target }}/release/ketal" "${{ steps.validate.outputs.asset_name }}"
 
       - name: Publish GitHub release
         if: steps.validate.outputs.skip != 'true'
