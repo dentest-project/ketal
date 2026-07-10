@@ -60,7 +60,7 @@ impl UserGateway for SqlxUserGateway {
             .bind(username)
             .bind(email)
             .bind(password)
-            .bind(Json(json!([])))
+            .bind(Json(json!(["ROLE_USER"])))
             .bind(last_reset_password_request)
             .bind(reset_password_code)
             .execute(shared_pg_pool())
