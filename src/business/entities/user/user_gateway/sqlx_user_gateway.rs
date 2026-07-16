@@ -70,6 +70,30 @@ impl UserGateway for SqlxUserGateway {
         })
     }
 
+    fn find_one_by_username<'a>(&'a self, username: &'a str) -> GatewayFuture<'a, Option<User>> {
+        Box::pin(async move {
+            let row = sqlx::query(
+                r#"
+                SELECT
+                    id,
+                    username,
+                    email,
+                    password,
+                    last_reset_password_request,
+                    reset_password_code
+                FROM app_user
+                WHERE username = $1
+                LIMIT 1
+                "#,
+            )
+            .bind(username)
+            .fetch_optional(shared_pg_pool())
+            .await?;
+
+            row.map(|row| user_from_row(&row)).transpose()
+        })
+    }
+
     fn find_one_by_email_or_username<'a>(
         &'a self,
         email: &'a str,
@@ -168,6 +192,17 @@ mod tests {
         assert_eq!(found_user.username, user.username);
         assert_eq!(found_user.email, user.email);
         assert_eq!(found_user.password, user.password);
+
+        let found_by_username = gateway
+            .find_one_by_username(&user.username)
+            .await
+            .expect("username search should succeed")
+            .expect("saved user should be found by username");
+
+        assert_eq!(found_by_username.id, user.id);
+        assert_eq!(found_by_username.username, user.username);
+        assert_eq!(found_by_username.email, user.email);
+        assert_eq!(found_by_username.password, user.password);
 
         sqlx::query("DELETE FROM app_user WHERE id = $1")
             .bind(user.id)

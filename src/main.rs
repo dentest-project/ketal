@@ -1,5 +1,8 @@
 use axum::{
-    http::{Method, header::CONTENT_TYPE},
+    http::{
+        Method,
+        header::{AUTHORIZATION, CONTENT_TYPE},
+    },
     serve,
 };
 use jsonrpc_usecase::axum as jsonrpc_axum;
@@ -16,7 +19,7 @@ async fn main() {
     let cors = CorsLayer::new()
         .allow_origin(cors_allowed_origin())
         .allow_methods([Method::POST])
-        .allow_headers([CONTENT_TYPE]);
+        .allow_headers([CONTENT_TYPE, AUTHORIZATION]);
     let app = jsonrpc_axum::router(service).layer(cors);
     let bind_addr = server_bind_address();
     let listener = TcpListener::bind(&bind_addr)

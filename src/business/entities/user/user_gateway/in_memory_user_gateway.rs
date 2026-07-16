@@ -24,6 +24,20 @@ impl UserGateway for InMemoryUserGateway {
         })
     }
 
+    fn find_one_by_username<'a>(&'a self, username: &'a str) -> GatewayFuture<'a, Option<User>> {
+        Box::pin(async move {
+            let user = self
+                .users
+                .lock()
+                .expect("user gateway mutex should not be poisoned")
+                .values()
+                .find(|user| user.username == username)
+                .cloned();
+
+            Ok(user)
+        })
+    }
+
     fn find_one_by_email_or_username<'a>(
         &'a self,
         email: &'a str,

@@ -13,6 +13,7 @@ pub type GatewayFuture<'a, T> = Pin<Box<dyn Future<Output = GatewayResult<T>> + 
 
 pub trait UserGateway: Send + Sync {
     fn save<'a>(&'a self, user: &'a User) -> GatewayFuture<'a, ()>;
+    fn find_one_by_username<'a>(&'a self, username: &'a str) -> GatewayFuture<'a, Option<User>>;
     fn find_one_by_email_or_username<'a>(
         &'a self,
         email: &'a str,
