@@ -34,16 +34,20 @@ pub fn server_bind_address() -> String {
     format!("127.0.0.1:{port}")
 }
 
-pub fn cors_allowed_origin() -> HeaderValue {
+pub fn allowed_origin() -> String {
     let _ = dotenvy::dotenv();
 
     match env::var(CORS_ALLOWED_ORIGIN) {
-        Ok(origin) => parse_header_value(CORS_ALLOWED_ORIGIN, &origin),
+        Ok(origin) => origin,
         Err(env::VarError::NotPresent) => {
             panic!("{CORS_ALLOWED_ORIGIN} must be set to the allowed browser origin")
         }
         Err(error) => panic!("{CORS_ALLOWED_ORIGIN} must be valid Unicode: {error}"),
     }
+}
+
+pub fn cors_allowed_origin() -> HeaderValue {
+    parse_header_value(CORS_ALLOWED_ORIGIN, &allowed_origin())
 }
 
 pub fn jwt_secrets() -> JwtSecrets {

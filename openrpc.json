@@ -2,7 +2,7 @@
   "openrpc": "1.3.2",
   "info": {
     "title": "Dentest Ketal JSON-RPC Documentation",
-    "version": "0.4.0"
+    "version": "0.5.0"
   },
   "methods": [
     {
@@ -110,6 +110,45 @@
           "message": "PasswordEncoderError"
         }
       ]
+    },
+    {
+      "name": "RequestPasswordReset",
+      "summary": "Request a password reset code for an existing user.",
+      "params": [
+        {
+          "name": "subject",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "The login subject used to identify the account."
+          }
+        }
+      ],
+      "result": {
+        "name": "requestPasswordReset",
+        "schema": {
+          "type": "null"
+        }
+      },
+      "errors": [
+        {
+          "code": 20007,
+          "message": "UserNotFound"
+        },
+        {
+          "code": 20008,
+          "message": "ResetPasswordRequestTooEarly",
+          "data": {
+            "$ref": "#/components/schemas/ResetPasswordRequestTooEarlyError"
+          }
+        },
+        {
+          "code": 20002,
+          "message": "GatewayError"
+        }
+      ]
     }
   ],
   "components": {
@@ -143,6 +182,20 @@
           },
           "email": {
             "type": "string"
+          }
+        }
+      },
+      "ResetPasswordRequestTooEarlyError": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "remainingMinutes"
+        ],
+        "properties": {
+          "remainingMinutes": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "The number of minutes remaining before another reset password request is allowed."
           }
         }
       }
