@@ -1,6 +1,8 @@
+#[cfg(test)]
 pub mod in_memory_user_gateway;
 pub mod sqlx_user_gateway;
 
+#[cfg(test)]
 pub use in_memory_user_gateway::InMemoryUserGateway;
 pub use sqlx_user_gateway::SqlxUserGateway;
 

@@ -67,52 +67,20 @@ mod tests {
             UserBuilder,
             user_gateway::{InMemoryUserGateway, UserGateway},
         },
-        services::{PasswordEncoder, PasswordEncoderResult},
+        services::password_encoder::PasswordEncoderDouble,
     };
     use serde_json::json;
-    use std::sync::{Arc, Mutex};
-
-    struct FakePasswordEncoder {
-        encoded_password: String,
-        received_password: Mutex<Option<String>>,
-    }
-
-    impl FakePasswordEncoder {
-        fn new(encoded_password: impl Into<String>) -> Self {
-            Self {
-                encoded_password: encoded_password.into(),
-                received_password: Mutex::new(None),
-            }
-        }
-
-        fn received_password(&self) -> Option<String> {
-            self.received_password
-                .lock()
-                .expect("received password mutex should not be poisoned")
-                .clone()
-        }
-    }
-
-    impl PasswordEncoder for FakePasswordEncoder {
-        fn encode(&self, password: &str) -> PasswordEncoderResult<String> {
-            self.received_password
-                .lock()
-                .expect("received password mutex should not be poisoned")
-                .replace(password.to_owned());
-
-            Ok(self.encoded_password.clone())
-        }
-    }
+    use std::sync::Arc;
 
     #[tokio::test]
     async fn returns_user_already_exists_when_email_or_username_is_taken() {
         let user_gateway = Arc::new(InMemoryUserGateway::default());
         let existing_user = UserBuilder::init()
-            .with_username("alice".to_owned())
-            .with_email("alice@example.com".to_owned())
+            .with_username("Alice".to_owned())
+            .with_email("Alice@Example.com".to_owned())
             .with_password("hashed-password".to_owned())
             .build();
-        let password_encoder = Arc::new(FakePasswordEncoder::new("hashed-password"));
+        let password_encoder = Arc::new(PasswordEncoderDouble::encoding("hashed-password"));
         let register = Register {
             user_gateway: user_gateway.clone(),
             password_encoder: password_encoder.clone(),
@@ -141,7 +109,7 @@ mod tests {
     #[tokio::test]
     async fn hashes_password_saves_user_and_returns_detailed_output() {
         let user_gateway = Arc::new(InMemoryUserGateway::default());
-        let password_encoder = Arc::new(FakePasswordEncoder::new("hashed-password"));
+        let password_encoder = Arc::new(PasswordEncoderDouble::encoding("hashed-password"));
         let register = Register {
             user_gateway: user_gateway.clone(),
             password_encoder: password_encoder.clone(),

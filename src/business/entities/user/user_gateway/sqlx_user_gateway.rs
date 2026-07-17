@@ -82,7 +82,7 @@ impl UserGateway for SqlxUserGateway {
                     last_reset_password_request,
                     reset_password_code
                 FROM app_user
-                WHERE username = $1
+                WHERE LOWER(username) = LOWER($1)
                 LIMIT 1
                 "#,
             )
@@ -110,7 +110,7 @@ impl UserGateway for SqlxUserGateway {
                     last_reset_password_request,
                     reset_password_code
                 FROM app_user
-                WHERE email = $1 OR username = $2
+                WHERE LOWER(email) = LOWER($1) OR LOWER(username) = LOWER($2)
                 LIMIT 1
                 "#,
             )
@@ -183,10 +183,10 @@ mod tests {
         assert_eq!(row.get::<String, _>("password"), user.password);
 
         let found_user = gateway
-            .find_one_by_email_or_username(&user.email, "unused-username")
+            .find_one_by_email_or_username(&user.email.to_uppercase(), "unused-username")
             .await
             .expect("search should succeed")
-            .expect("saved user should be found");
+            .expect("saved user should be found by email without matching case");
 
         assert_eq!(found_user.id, user.id);
         assert_eq!(found_user.username, user.username);
@@ -194,10 +194,10 @@ mod tests {
         assert_eq!(found_user.password, user.password);
 
         let found_by_username = gateway
-            .find_one_by_username(&user.username)
+            .find_one_by_username(&user.username.to_uppercase())
             .await
             .expect("username search should succeed")
-            .expect("saved user should be found by username");
+            .expect("saved user should be found by username without matching case");
 
         assert_eq!(found_by_username.id, user.id);
         assert_eq!(found_by_username.username, user.username);

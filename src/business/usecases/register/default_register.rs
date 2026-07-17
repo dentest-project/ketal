@@ -1,7 +1,7 @@
 use super::Register;
-use crate::{
-    business::entities::user::user_gateway::SqlxUserGateway,
-    infrastructure::services::Argon2PasswordEncoder,
+use crate::business::{
+    entities::user::user_gateway::SqlxUserGateway,
+    services::password_encoder::Argon2PasswordEncoder,
 };
 use std::sync::Arc;
 

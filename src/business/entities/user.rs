@@ -19,3 +19,13 @@ pub struct User {
     last_reset_password_request: Option<SystemTime>,
     reset_password_code: Option<String>,
 }
+
+impl User {
+    pub(crate) fn username(&self) -> &str {
+        &self.username
+    }
+
+    pub(crate) fn password(&self) -> &str {
+        &self.password
+    }
+}
