@@ -64,11 +64,17 @@ mod tests {
             user_gateway::{InMemoryUserGateway, UserGateway},
         },
         services::{
-            password_decoder::PasswordDecoderDouble, token_generator::TokenGeneratorDouble,
+            password_decoder::{
+                Argon2PasswordDecoder, BcryptPasswordDecoder, MultiplePasswordDecoder,
+                PasswordDecoderDouble,
+            },
+            token_generator::TokenGeneratorDouble,
         },
     };
     use serde_json::json;
     use std::sync::Arc;
+
+    const TEST_BCRYPT_COST: u32 = 4;
 
     #[tokio::test]
     async fn returns_invalid_credentials_when_user_does_not_exist() {
@@ -158,11 +164,43 @@ mod tests {
         assert_eq!(output.token, "generated-token");
     }
 
+    #[tokio::test]
+    async fn returns_token_when_bcrypt_password_matches() {
+        let user_gateway = Arc::new(InMemoryUserGateway::default());
+        saved_user_with_password(
+            user_gateway.as_ref(),
+            bcrypt::hash("secret123", TEST_BCRYPT_COST).expect("password should hash"),
+        )
+        .await;
+        let password_decoder = Arc::new(MultiplePasswordDecoder::new(vec![
+            Arc::new(Argon2PasswordDecoder::new()),
+            Arc::new(BcryptPasswordDecoder::new()),
+        ]));
+        let token_generator = Arc::new(TokenGeneratorDouble::new("generated-token"));
+        let login = Login {
+            user_gateway,
+            password_decoder,
+            token_generator,
+        };
+        let input = login_input("alice", "secret123");
+
+        let output = login
+            .execute(input)
+            .await
+            .expect("bcrypt login should succeed");
+
+        assert_eq!(output.token, "generated-token");
+    }
+
     async fn saved_user(user_gateway: &dyn UserGateway) -> User {
+        saved_user_with_password(user_gateway, "hashed-password".to_owned()).await
+    }
+
+    async fn saved_user_with_password(user_gateway: &dyn UserGateway, password: String) -> User {
         let user = UserBuilder::init()
             .with_username("alice".to_owned())
             .with_email("alice@example.com".to_owned())
-            .with_password("hashed-password".to_owned())
+            .with_password(password)
             .build();
 
         user_gateway

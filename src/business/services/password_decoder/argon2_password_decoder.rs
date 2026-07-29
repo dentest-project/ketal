@@ -15,6 +15,10 @@ impl Argon2PasswordDecoder {
 
 impl PasswordDecoder for Argon2PasswordDecoder {
     fn matches(&self, password: &str, encoded_password: &str) -> PasswordDecoderResult<bool> {
+        if !encoded_password.starts_with("$argon2") {
+            return Ok(false);
+        }
+
         let hash = PasswordHash::new(encoded_password)
             .map_err(|error| PasswordDecoderError::new(error.to_string()))?;
 
@@ -23,5 +27,23 @@ impl PasswordDecoder for Argon2PasswordDecoder {
             Err(PasswordHashError::Password) => Ok(false),
             Err(error) => Err(PasswordDecoderError::new(error.to_string())),
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::Argon2PasswordDecoder;
+    use crate::business::services::PasswordDecoder;
+
+    #[test]
+    fn returns_false_for_unsupported_hash_format() {
+        assert!(
+            !Argon2PasswordDecoder::new()
+                .matches(
+                    "secret123",
+                    "$2b$12$hX7K7AqwWYoHfvGgXE2vUe4v84LQdicAsWfuGnXez0P0yLbMivSSq"
+                )
+                .expect("unsupported hashes should not fail")
+        );
     }
 }
