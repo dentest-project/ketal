@@ -64,6 +64,7 @@ mod tests {
         },
         services::reset_password_code_generator::ResetPasswordCodeGeneratorDouble,
     };
+    use jsonrpc_usecase::UseCaseExecutionError;
     use serde_json::json;
     use std::sync::Arc;
 
@@ -83,7 +84,10 @@ mod tests {
             .await
             .expect_err("unknown user should be rejected");
 
-        assert!(matches!(error, RequestPasswordResetError::UserNotFound(_)));
+        assert!(matches!(
+            error,
+            UseCaseExecutionError::Execution(RequestPasswordResetError::UserNotFound(_))
+        ));
         assert_eq!(reset_password_code_generator.calls(), 0);
     }
 
@@ -110,13 +114,13 @@ mod tests {
             .await
             .expect_err("recent reset password request should be rejected");
 
-        assert!(matches!(
-            error,
-            RequestPasswordResetError::ResetPasswordRequestTooEarly(_)
-        ));
-        if let RequestPasswordResetError::ResetPasswordRequestTooEarly(error) = error {
-            assert_eq!(error.remaining_minutes(), 120);
-        }
+        let UseCaseExecutionError::Execution(
+            RequestPasswordResetError::ResetPasswordRequestTooEarly(error),
+        ) = error
+        else {
+            panic!("expected reset password request too early error");
+        };
+        assert_eq!(error.remaining_minutes(), 120);
         assert_eq!(reset_password_code_generator.calls(), 0);
         assert_eq!(
             user_gateway

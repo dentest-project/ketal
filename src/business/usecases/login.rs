@@ -71,6 +71,7 @@ mod tests {
             token_generator::TokenGeneratorDouble,
         },
     };
+    use jsonrpc_usecase::UseCaseExecutionError;
     use serde_json::json;
     use std::sync::Arc;
 
@@ -93,7 +94,10 @@ mod tests {
             .await
             .expect_err("unknown user should be rejected");
 
-        assert!(matches!(error, LoginError::InvalidCredentials(_)));
+        assert!(matches!(
+            error,
+            UseCaseExecutionError::Execution(LoginError::InvalidCredentials(_))
+        ));
         assert!(password_decoder.received_matches().is_empty());
         assert!(token_generator.received_usernames().is_empty());
     }
@@ -116,7 +120,10 @@ mod tests {
             .await
             .expect_err("wrong password should be rejected");
 
-        assert!(matches!(error, LoginError::InvalidCredentials(_)));
+        assert!(matches!(
+            error,
+            UseCaseExecutionError::Execution(LoginError::InvalidCredentials(_))
+        ));
         assert_eq!(
             password_decoder.received_matches(),
             vec![("secret123".to_owned(), user.password().to_owned())]

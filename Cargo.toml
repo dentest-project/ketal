@@ -1,6 +1,6 @@
 [package]
 name = "ketal"
-version = "0.5.1"
+version = "0.5.2"
 edition = "2024"
 
 [dependencies]
@@ -10,7 +10,7 @@ aws-sdk-sesv2 = "1"
 axum = { version = "0.8", default-features = false, features = ["http1", "json", "tokio"] }
 bcrypt = "0.19.3"
 dotenvy = "0.15"
-jsonrpc-usecase = { git = "https://github.com/pierrerolland/jsonrpc-usecase", features = ["axum"], version = "0.5.0" }
+jsonrpc-usecase = { git = "https://github.com/pierrerolland/jsonrpc-usecase", features = ["axum"], version = "0.6.0" }
 jsonwebtoken = { version = "10.4", features = ["rust_crypto"] }
 rand_core = { version = "0.6", features = ["getrandom"] }
 rsa = { version = "0.9", features = ["pkcs5"] }

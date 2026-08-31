@@ -69,6 +69,7 @@ mod tests {
         },
         services::password_encoder::PasswordEncoderDouble,
     };
+    use jsonrpc_usecase::UseCaseExecutionError;
     use serde_json::json;
     use std::sync::Arc;
 
@@ -102,7 +103,10 @@ mod tests {
             .await
             .expect_err("duplicate user should be rejected");
 
-        assert!(matches!(error, RegisterError::UserAlreadyExists(_)));
+        assert!(matches!(
+            error,
+            UseCaseExecutionError::Execution(RegisterError::UserAlreadyExists(_))
+        ));
         assert!(password_encoder.received_password().is_none());
     }
 

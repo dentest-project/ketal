@@ -2,7 +2,7 @@
   "openrpc": "1.3.2",
   "info": {
     "title": "Dentest Ketal JSON-RPC Documentation",
-    "version": "0.5.1"
+    "version": "0.5.2"
   },
   "methods": [
     {
@@ -16,7 +16,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 255,
-            "description": "The login subject used to identify the account."
+            "description": "The login subject used to identify the account. Leading and trailing whitespace is removed before validation."
           }
         },
         {
@@ -26,7 +26,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 64,
-            "description": "The plain-text password to verify."
+            "description": "The plain-text password to verify. Leading and trailing whitespace is removed before validation."
           }
         }
       ],
@@ -66,7 +66,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 50,
-            "description": "The public username for the account."
+            "description": "The public username for the account. Leading and trailing whitespace is removed before validation."
           }
         },
         {
@@ -76,7 +76,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 255,
-            "description": "The email address used to identify and contact the account."
+            "description": "The email address used to identify and contact the account. Leading and trailing whitespace is removed before validation."
           }
         },
         {
@@ -86,7 +86,7 @@
             "type": "string",
             "minLength": 8,
             "maxLength": 64,
-            "description": "The plain-text password chosen for the account."
+            "description": "The plain-text password chosen for the account. Leading and trailing whitespace is removed before validation."
           }
         }
       ],
@@ -122,7 +122,7 @@
             "type": "string",
             "minLength": 1,
             "maxLength": 255,
-            "description": "The login subject used to identify the account."
+            "description": "The login subject used to identify the account. Leading and trailing whitespace is removed before validation."
           }
         }
       ],
