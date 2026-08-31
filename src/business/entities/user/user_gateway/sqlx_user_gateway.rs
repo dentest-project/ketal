@@ -122,6 +122,33 @@ impl UserGateway for SqlxUserGateway {
             row.map(|row| user_from_row(&row)).transpose()
         })
     }
+
+    fn find_one_by_reset_password_code<'a>(
+        &'a self,
+        reset_password_code: &'a str,
+    ) -> GatewayFuture<'a, Option<User>> {
+        Box::pin(async move {
+            let row = sqlx::query(
+                r#"
+                SELECT
+                    id,
+                    username,
+                    email,
+                    password,
+                    last_reset_password_request,
+                    reset_password_code
+                FROM app_user
+                WHERE reset_password_code = $1
+                LIMIT 1
+                "#,
+            )
+            .bind(reset_password_code)
+            .fetch_optional(shared_pg_pool())
+            .await?;
+
+            row.map(|row| user_from_row(&row)).transpose()
+        })
+    }
 }
 
 fn user_from_row(row: &PgRow) -> GatewayResult<User> {
@@ -153,11 +180,13 @@ mod tests {
     #[tokio::test]
     async fn saves_and_finds_user_in_app_user() {
         let suffix = Uuid::new_v4();
-        let user = UserBuilder::init()
+        let mut user = UserBuilder::init()
             .with_username(format!("sqlx-user-gateway-test-{suffix}"))
             .with_email(format!("sqlx-user-gateway-test-{suffix}@example.com"))
             .with_password("secret".to_owned())
             .build();
+        let reset_password_code = format!("reset-password-code-{suffix}");
+        user.define_reset_password_code(reset_password_code.clone());
 
         let gateway = SqlxUserGateway::new();
 
@@ -203,6 +232,17 @@ mod tests {
         assert_eq!(found_by_username.username, user.username);
         assert_eq!(found_by_username.email, user.email);
         assert_eq!(found_by_username.password, user.password);
+
+        let found_by_reset_password_code = gateway
+            .find_one_by_reset_password_code(&reset_password_code)
+            .await
+            .expect("reset password code search should succeed")
+            .expect("saved user should be found by reset password code");
+
+        assert_eq!(found_by_reset_password_code.id, user.id);
+        assert_eq!(found_by_reset_password_code.username, user.username);
+        assert_eq!(found_by_reset_password_code.email, user.email);
+        assert_eq!(found_by_reset_password_code.password, user.password);
 
         sqlx::query("DELETE FROM app_user WHERE id = $1")
             .bind(user.id)

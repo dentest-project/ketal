@@ -67,3 +67,18 @@ fn exposes_remaining_reset_password_request_cooldown_minutes_when_not_expired() 
         Some(90)
     );
 }
+
+#[test]
+fn resets_password_and_consumes_reset_password_code() {
+    use crate::business::{EntityBuilder, entities::user::UserBuilder};
+
+    let mut user = UserBuilder::init()
+        .with_password("old-password".to_owned())
+        .build();
+    user.define_reset_password_code("reset-password-code".to_owned());
+
+    user.reset_password("new-password".to_owned());
+
+    assert_eq!(user.password(), "new-password");
+    assert_eq!(user.reset_password_code(), None);
+}

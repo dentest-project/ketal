@@ -65,4 +65,9 @@ impl User {
         self.reset_password_code = Some(code);
         self.last_reset_password_request = Some(SystemTime::now());
     }
+
+    pub(crate) fn reset_password(&mut self, password: String) {
+        self.password = password;
+        self.reset_password_code = None;
+    }
 }

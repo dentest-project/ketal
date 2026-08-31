@@ -64,4 +64,21 @@ impl UserGateway for InMemoryUserGateway {
             Ok(user)
         })
     }
+
+    fn find_one_by_reset_password_code<'a>(
+        &'a self,
+        reset_password_code: &'a str,
+    ) -> GatewayFuture<'a, Option<User>> {
+        Box::pin(async move {
+            let user = self
+                .users
+                .lock()
+                .expect("user gateway mutex should not be poisoned")
+                .values()
+                .find(|user| user.reset_password_code.as_deref() == Some(reset_password_code))
+                .cloned();
+
+            Ok(user)
+        })
+    }
 }
