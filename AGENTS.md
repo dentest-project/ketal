@@ -1,5 +1,13 @@
 # Agent Instructions
 
+## Stability and Error Handling
+
+- Never introduce `.expect(...)`, `.unwrap(...)`, `panic!(...)`, `unreachable!(...)`, `todo!(...)`, or other intentional panic paths, including in tests.
+- Return or propagate typed errors from application code instead of terminating or unwinding.
+- Use `UnexpectedError` when an invariant fails and no more specific error applies, so request handling remains stable.
+- In tests, use assertions and explicit result matching instead of panic-based result extraction.
+- When touching existing code that contains a panic path, replace that path with stable error handling when it is within the scope of the change.
+
 ## OpenRPC Maintenance
 
 When creating, updating, renaming, or deleting a use case under `src/business/usecases`, update `openrpc.json` in the same change.

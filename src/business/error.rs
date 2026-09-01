@@ -4,6 +4,7 @@ mod password_decoder_error;
 mod password_encoder_error;
 mod reset_password_request_too_early_error;
 mod token_generator_error;
+mod unexpected_error;
 mod user_already_exists_error;
 mod user_not_found_error;
 
@@ -13,6 +14,7 @@ pub(crate) use password_decoder_error::PasswordDecoderError;
 pub(crate) use password_encoder_error::PasswordEncoderError;
 pub(crate) use reset_password_request_too_early_error::ResetPasswordRequestTooEarlyError;
 pub(crate) use token_generator_error::TokenGeneratorError;
+pub(crate) use unexpected_error::UnexpectedError;
 pub(crate) use user_already_exists_error::UserAlreadyExistsError;
 pub(crate) use user_not_found_error::UserNotFoundError;
 

@@ -2,7 +2,7 @@
   "openrpc": "1.3.2",
   "info": {
     "title": "Dentest Ketal JSON-RPC Documentation",
-    "version": "0.6.0"
+    "version": "0.7.0"
   },
   "methods": [
     {
@@ -193,6 +193,27 @@
         {
           "code": 20003,
           "message": "PasswordEncoderError"
+        }
+      ]
+    },
+    {
+      "name": "WhoAmI",
+      "summary": "Return the currently authenticated user.",
+      "params": [],
+      "result": {
+        "name": "user",
+        "schema": {
+          "$ref": "#/components/schemas/UserDetailedOutput"
+        }
+      },
+      "errors": [
+        {
+          "code": -32001,
+          "message": "Access denied"
+        },
+        {
+          "code": 20009,
+          "message": "UnexpectedError"
         }
       ]
     }
