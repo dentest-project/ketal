@@ -1,6 +1,7 @@
 #![cfg(test)]
 
 use super::{PasswordEncoder, PasswordEncoderResult};
+use crate::business::error::PasswordEncoderError;
 use std::sync::Mutex;
 
 pub(crate) struct PasswordEncoderDouble {
@@ -19,8 +20,8 @@ impl PasswordEncoderDouble {
     pub(crate) fn received_password(&self) -> Option<String> {
         self.received_password
             .lock()
-            .expect("received password mutex should not be poisoned")
-            .clone()
+            .ok()
+            .and_then(|password| password.clone())
     }
 }
 
@@ -28,7 +29,7 @@ impl PasswordEncoder for PasswordEncoderDouble {
     fn encode(&self, password: &str) -> PasswordEncoderResult<String> {
         self.received_password
             .lock()
-            .expect("received password mutex should not be poisoned")
+            .map_err(|error| PasswordEncoderError::new(error.to_string()))?
             .replace(password.to_owned());
 
         Ok(self.encoded_password.clone())

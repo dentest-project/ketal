@@ -2,7 +2,7 @@
   "openrpc": "1.3.2",
   "info": {
     "title": "Dentest Ketal JSON-RPC Documentation",
-    "version": "0.7.0"
+    "version": "0.8.0"
   },
   "methods": [
     {
@@ -193,6 +193,77 @@
         {
           "code": 20003,
           "message": "PasswordEncoderError"
+        }
+      ]
+    },
+    {
+      "name": "UpdateMyPersonalInformation",
+      "summary": "Update the currently authenticated user's personal information.",
+      "params": [
+        {
+          "name": "username",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 50,
+            "description": "The new public username for the account. Leading and trailing whitespace is removed before validation."
+          }
+        },
+        {
+          "name": "email",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "The new email address for the account. Leading and trailing whitespace is removed before validation."
+          }
+        },
+        {
+          "name": "password",
+          "required": false,
+          "schema": {
+            "oneOf": [
+              {
+                "type": "string",
+                "minLength": 8,
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "description": "An optional new plain-text password for the account. Leading and trailing whitespace is removed before validation. When omitted or null, the current password is preserved."
+          }
+        }
+      ],
+      "result": {
+        "name": "user",
+        "schema": {
+          "$ref": "#/components/schemas/UserDetailedOutput"
+        }
+      },
+      "errors": [
+        {
+          "code": -32001,
+          "message": "Access denied"
+        },
+        {
+          "code": 20001,
+          "message": "UserAlreadyExists"
+        },
+        {
+          "code": 20002,
+          "message": "GatewayError"
+        },
+        {
+          "code": 20003,
+          "message": "PasswordEncoderError"
+        },
+        {
+          "code": 20009,
+          "message": "UnexpectedError"
         }
       ]
     },

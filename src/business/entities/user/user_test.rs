@@ -82,3 +82,41 @@ fn resets_password_and_consumes_reset_password_code() {
     assert_eq!(user.password(), "new-password");
     assert_eq!(user.reset_password_code(), None);
 }
+
+#[test]
+fn updates_personal_information_without_changing_an_omitted_password() {
+    use crate::business::{EntityBuilder, entities::user::UserBuilder};
+
+    let mut user = UserBuilder::init()
+        .with_username("old-username".to_owned())
+        .with_email("old-email@example.com".to_owned())
+        .with_password("old-password".to_owned())
+        .build();
+
+    user.update_personal_information(
+        "new-username".to_owned(),
+        "new-email@example.com".to_owned(),
+        None,
+    );
+
+    assert_eq!(user.username(), "new-username");
+    assert_eq!(user.email(), "new-email@example.com");
+    assert_eq!(user.password(), "old-password");
+}
+
+#[test]
+fn updates_personal_information_with_a_new_password() {
+    use crate::business::{EntityBuilder, entities::user::UserBuilder};
+
+    let mut user = UserBuilder::init()
+        .with_password("old-password".to_owned())
+        .build();
+
+    user.update_personal_information(
+        "new-username".to_owned(),
+        "new-email@example.com".to_owned(),
+        Some("new-password".to_owned()),
+    );
+
+    assert_eq!(user.password(), "new-password");
+}

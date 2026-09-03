@@ -70,4 +70,18 @@ impl User {
         self.password = password;
         self.reset_password_code = None;
     }
+
+    pub(crate) fn update_personal_information(
+        &mut self,
+        username: String,
+        email: String,
+        password: Option<String>,
+    ) {
+        self.username = username;
+        self.email = email;
+
+        if let Some(password) = password {
+            self.password = password;
+        }
+    }
 }

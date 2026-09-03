@@ -14,8 +14,7 @@ use sqlx::{
         chrono::{DateTime, Utc},
     },
 };
-
-#[derive(Clone)]
+#[derive(Clone, Default)]
 pub struct SqlxUserGateway;
 
 impl SqlxUserGateway {
@@ -123,6 +122,40 @@ impl UserGateway for SqlxUserGateway {
         })
     }
 
+    fn find_one_by_email_or_username_excluding_user<'a>(
+        &'a self,
+        email: &'a str,
+        username: &'a str,
+        excluded_user: &'a User,
+    ) -> GatewayFuture<'a, Option<User>> {
+        let excluded_user_id = excluded_user.id;
+
+        Box::pin(async move {
+            let row = sqlx::query(
+                r#"
+                SELECT
+                    id,
+                    username,
+                    email,
+                    password,
+                    last_reset_password_request,
+                    reset_password_code
+                FROM app_user
+                WHERE id != $1
+                    AND (LOWER(email) = LOWER($2) OR LOWER(username) = LOWER($3))
+                LIMIT 1
+                "#,
+            )
+            .bind(excluded_user_id)
+            .bind(email)
+            .bind(username)
+            .fetch_optional(shared_pg_pool())
+            .await?;
+
+            row.map(|row| user_from_row(&row)).transpose()
+        })
+    }
+
     fn find_one_by_reset_password_code<'a>(
         &'a self,
         reset_password_code: &'a str,
@@ -175,25 +208,23 @@ mod tests {
         database::shared_pg_pool,
     };
     use sqlx::Row;
+    use std::{error::Error, io};
     use uuid::Uuid;
 
     #[tokio::test]
-    async fn saves_and_finds_user_in_app_user() {
+    async fn saves_and_finds_user_in_app_user() -> Result<(), Box<dyn Error>> {
         let suffix = Uuid::new_v4();
         let mut user = UserBuilder::init()
-            .with_username(format!("sqlx-user-gateway-test-{suffix}"))
+            .with_username(format!("gateway-test-{suffix}"))
             .with_email(format!("sqlx-user-gateway-test-{suffix}@example.com"))
             .with_password("secret".to_owned())
             .build();
-        let reset_password_code = format!("reset-password-code-{suffix}");
+        let reset_password_code = format!("reset-{suffix}");
         user.define_reset_password_code(reset_password_code.clone());
 
         let gateway = SqlxUserGateway::new();
 
-        gateway
-            .save(&user)
-            .await
-            .expect("user should be saved in postgres");
+        gateway.save(&user).await?;
 
         let row = sqlx::query(
             r#"
@@ -204,18 +235,18 @@ mod tests {
         )
         .bind(user.id)
         .fetch_one(shared_pg_pool())
-        .await
-        .expect("saved user should be queryable");
+        .await?;
 
-        assert_eq!(row.get::<String, _>("username"), user.username);
-        assert_eq!(row.get::<String, _>("email"), user.email);
-        assert_eq!(row.get::<String, _>("password"), user.password);
+        assert_eq!(row.try_get::<String, _>("username")?, user.username);
+        assert_eq!(row.try_get::<String, _>("email")?, user.email);
+        assert_eq!(row.try_get::<String, _>("password")?, user.password);
 
         let found_user = gateway
             .find_one_by_email_or_username(&user.email.to_uppercase(), "unused-username")
-            .await
-            .expect("search should succeed")
-            .expect("saved user should be found by email without matching case");
+            .await?
+            .ok_or_else(|| {
+                io::Error::other("saved user should be found by email without matching case")
+            })?;
 
         assert_eq!(found_user.id, user.id);
         assert_eq!(found_user.username, user.username);
@@ -224,20 +255,25 @@ mod tests {
 
         let found_by_username = gateway
             .find_one_by_username(&user.username.to_uppercase())
-            .await
-            .expect("username search should succeed")
-            .expect("saved user should be found by username without matching case");
+            .await?
+            .ok_or_else(|| {
+                io::Error::other("saved user should be found by username without matching case")
+            })?;
 
         assert_eq!(found_by_username.id, user.id);
         assert_eq!(found_by_username.username, user.username);
         assert_eq!(found_by_username.email, user.email);
         assert_eq!(found_by_username.password, user.password);
 
+        let excluded_user = gateway
+            .find_one_by_email_or_username_excluding_user(&user.email, &user.username, &user)
+            .await?;
+        assert!(excluded_user.is_none());
+
         let found_by_reset_password_code = gateway
             .find_one_by_reset_password_code(&reset_password_code)
-            .await
-            .expect("reset password code search should succeed")
-            .expect("saved user should be found by reset password code");
+            .await?
+            .ok_or_else(|| io::Error::other("saved user should be found by reset password code"))?;
 
         assert_eq!(found_by_reset_password_code.id, user.id);
         assert_eq!(found_by_reset_password_code.username, user.username);
@@ -247,7 +283,8 @@ mod tests {
         sqlx::query("DELETE FROM app_user WHERE id = $1")
             .bind(user.id)
             .execute(shared_pg_pool())
-            .await
-            .expect("saved test user should be removable");
+            .await?;
+
+        Ok(())
     }
 }

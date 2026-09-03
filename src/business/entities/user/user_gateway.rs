@@ -21,6 +21,12 @@ pub trait UserGateway: Send + Sync {
         email: &'a str,
         username: &'a str,
     ) -> GatewayFuture<'a, Option<User>>;
+    fn find_one_by_email_or_username_excluding_user<'a>(
+        &'a self,
+        email: &'a str,
+        username: &'a str,
+        excluded_user: &'a User,
+    ) -> GatewayFuture<'a, Option<User>>;
     fn find_one_by_reset_password_code<'a>(
         &'a self,
         reset_password_code: &'a str,

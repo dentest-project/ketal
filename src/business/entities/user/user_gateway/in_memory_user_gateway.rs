@@ -4,6 +4,7 @@ use crate::business::entities::user::{
     User,
     user_gateway::{GatewayFuture, UserGateway},
 };
+use crate::business::error::GatewayError;
 use std::{collections::HashMap, sync::Mutex};
 use uuid::Uuid;
 
@@ -19,7 +20,7 @@ impl UserGateway for InMemoryUserGateway {
         Box::pin(async move {
             self.users
                 .lock()
-                .expect("user gateway mutex should not be poisoned")
+                .map_err(|error| GatewayError::new(error.to_string()))?
                 .insert(user.id, user);
 
             Ok(())
@@ -33,7 +34,7 @@ impl UserGateway for InMemoryUserGateway {
             let user = self
                 .users
                 .lock()
-                .expect("user gateway mutex should not be poisoned")
+                .map_err(|error| GatewayError::new(error.to_string()))?
                 .values()
                 .find(|user| user.username.to_lowercase() == username)
                 .cloned();
@@ -54,10 +55,37 @@ impl UserGateway for InMemoryUserGateway {
             let user = self
                 .users
                 .lock()
-                .expect("user gateway mutex should not be poisoned")
+                .map_err(|error| GatewayError::new(error.to_string()))?
                 .values()
                 .find(|user| {
                     user.email.to_lowercase() == email || user.username.to_lowercase() == username
+                })
+                .cloned();
+
+            Ok(user)
+        })
+    }
+
+    fn find_one_by_email_or_username_excluding_user<'a>(
+        &'a self,
+        email: &'a str,
+        username: &'a str,
+        excluded_user: &'a User,
+    ) -> GatewayFuture<'a, Option<User>> {
+        let email = email.to_lowercase();
+        let username = username.to_lowercase();
+        let excluded_user_id = excluded_user.id;
+
+        Box::pin(async move {
+            let user = self
+                .users
+                .lock()
+                .map_err(|error| GatewayError::new(error.to_string()))?
+                .values()
+                .find(|user| {
+                    user.id != excluded_user_id
+                        && (user.email.to_lowercase() == email
+                            || user.username.to_lowercase() == username)
                 })
                 .cloned();
 
@@ -73,7 +101,7 @@ impl UserGateway for InMemoryUserGateway {
             let user = self
                 .users
                 .lock()
-                .expect("user gateway mutex should not be poisoned")
+                .map_err(|error| GatewayError::new(error.to_string()))?
                 .values()
                 .find(|user| user.reset_password_code.as_deref() == Some(reset_password_code))
                 .cloned();
