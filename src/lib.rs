@@ -8,10 +8,11 @@ use std::sync::Arc;
 
 use crate::{
     business::entities::user::user_gateway::SqlxUserGateway,
-    infrastructure::auth::RequestContextBuilder,
+    infrastructure::{auth::RequestContextBuilder, transaction::configure_postgres_transactions},
 };
 
 pub fn build_service() -> Result<JsonRpcService, RegistrationError> {
+    configure_postgres_transactions();
     let context_builder = RequestContextBuilder::new(Arc::new(SqlxUserGateway::new()));
 
     JsonRpcService::builder()

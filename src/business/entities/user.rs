@@ -14,7 +14,7 @@ const RESET_PASSWORD_REQUEST_COOLDOWN: Duration = Duration::from_secs(2 * 60 * 6
 
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct User {
-    id: Uuid,
+    pub(super) id: Uuid,
     username: String,
     email: String,
     password: String,

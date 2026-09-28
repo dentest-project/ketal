@@ -2,9 +2,50 @@
   "openrpc": "1.3.2",
   "info": {
     "title": "Dentest Ketal JSON-RPC Documentation",
-    "version": "0.8.0"
+    "version": "0.9.0"
   },
   "methods": [
+    {
+      "name": "CreateOrganization",
+      "summary": "Create an organization.",
+      "description": "Creates an organization. The name must not already be taken.",
+      "params": [
+        {
+          "name": "name",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 255,
+            "description": "The organization name. Leading and trailing whitespace is removed before validation."
+          }
+        }
+      ],
+      "result": {
+        "name": "organization",
+        "schema": {
+          "$ref": "#/components/schemas/OrganizationDetailedOutput"
+        }
+      },
+      "errors": [
+        {
+          "code": -32001,
+          "message": "Access denied"
+        },
+        {
+          "code": 20010,
+          "message": "OrganizationAlreadyExists"
+        },
+        {
+          "code": 20002,
+          "message": "GatewayError"
+        },
+        {
+          "code": 20009,
+          "message": "UnexpectedError"
+        }
+      ]
+    },
     {
       "name": "Login",
       "summary": "Authenticate a user and return a JWT.",
@@ -291,6 +332,26 @@
   ],
   "components": {
     "schemas": {
+      "OrganizationDetailedOutput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
       "LoginOutput": {
         "type": "object",
         "additionalProperties": false,

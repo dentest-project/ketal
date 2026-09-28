@@ -1,5 +1,6 @@
 mod gateway_error;
 mod invalid_credentials_error;
+mod organization_already_exists_error;
 mod password_decoder_error;
 mod password_encoder_error;
 mod reset_password_request_too_early_error;
@@ -10,6 +11,7 @@ mod user_not_found_error;
 
 pub(crate) use gateway_error::GatewayError;
 pub(crate) use invalid_credentials_error::InvalidCredentialsError;
+pub(crate) use organization_already_exists_error::OrganizationAlreadyExistsError;
 pub(crate) use password_decoder_error::PasswordDecoderError;
 pub(crate) use password_encoder_error::PasswordEncoderError;
 pub(crate) use reset_password_request_too_early_error::ResetPasswordRequestTooEarlyError;
