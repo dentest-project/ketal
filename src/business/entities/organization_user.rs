@@ -1,12 +1,17 @@
 pub mod organization_user_gateway;
+pub mod organization_user_presenter;
 
 use super::{organization::Organization, user::User};
-use serde::Serialize;
+use crate::business::error::UserNotAllowedToAdministrateOrganizationError;
+use serde::{Deserialize, Serialize};
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[derive(Clone, Copy, Debug, Deserialize, PartialEq, Eq, Serialize)]
 #[serde(rename_all = "snake_case")]
 pub enum OrganizationPermission {
     Admin,
+    ProjectCreate,
+    ProjectWrite,
+    Read,
 }
 
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -30,6 +35,20 @@ impl OrganizationUser {
             self.permissions.push(OrganizationPermission::Admin);
         }
     }
+
+    fn has_permission(&self, permission: OrganizationPermission) -> bool {
+        self.permissions.contains(&permission)
+    }
+
+    pub fn ensure_can_administrate(
+        &self,
+    ) -> Result<(), UserNotAllowedToAdministrateOrganizationError> {
+        if self.has_permission(OrganizationPermission::Admin) {
+            Ok(())
+        } else {
+            Err(UserNotAllowedToAdministrateOrganizationError)
+        }
+    }
 }
 
 #[cfg(test)]
@@ -38,6 +57,7 @@ mod tests {
     use crate::business::{
         EntityBuilder,
         entities::{organization::OrganizationBuilder, user::UserBuilder},
+        error::UserNotAllowedToAdministrateOrganizationError,
     };
 
     #[test]
@@ -51,6 +71,10 @@ mod tests {
         assert_eq!(membership.organization, organization);
         assert_eq!(membership.user, user);
         assert!(membership.permissions.is_empty());
+        assert_eq!(
+            membership.ensure_can_administrate(),
+            Err(UserNotAllowedToAdministrateOrganizationError)
+        );
     }
 
     #[test]
@@ -63,5 +87,24 @@ mod tests {
         membership.make_admin();
 
         assert_eq!(membership.permissions, vec![OrganizationPermission::Admin]);
+        assert_eq!(membership.ensure_can_administrate(), Ok(()));
+    }
+
+    #[test]
+    fn recognizes_stored_permissions_and_only_grants_admin_access_to_admins()
+    -> Result<(), serde_json::Error> {
+        let organization = OrganizationBuilder::init().build();
+        let user = UserBuilder::init().build();
+        let mut membership = OrganizationUser::new(&organization, &user);
+        membership.permissions =
+            serde_json::from_str(r#"["project_create", "project_write", "read"]"#)?;
+
+        assert_eq!(
+            membership.ensure_can_administrate(),
+            Err(UserNotAllowedToAdministrateOrganizationError)
+        );
+        membership.permissions = serde_json::from_str(r#"["read", "admin"]"#)?;
+        assert_eq!(membership.ensure_can_administrate(), Ok(()));
+        Ok(())
     }
 }

@@ -4,7 +4,8 @@ use crate::business::{
     entities::{
         organization::{OrganizationBuilder, organization_gateway::InMemoryOrganizationGateway},
         organization_user::{
-            OrganizationUser, organization_user_gateway::InMemoryOrganizationUserGateway,
+            OrganizationUser,
+            organization_user_gateway::{InMemoryOrganizationUserGateway, OrganizationUserGateway},
         },
         user::UserBuilder,
     },
@@ -63,7 +64,9 @@ async fn makes_the_authenticated_user_an_organization_admin() -> Result<(), Box<
     let mut expected_membership = OrganizationUser::new(&organization, &user);
     expected_membership.make_admin();
     assert_eq!(
-        organization_user_gateway.find_one_by_organization_and_user(&organization, &user)?,
+        organization_user_gateway
+            .find_one_by_organization_and_user(&organization, &user)
+            .await?,
         Some(expected_membership)
     );
 

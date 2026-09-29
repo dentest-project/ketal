@@ -1,9 +1,16 @@
-use crate::business::entities::organization_user::{
-    OrganizationUser,
-    organization_user_gateway::{GatewayFuture, OrganizationUserGateway},
+use crate::business::{
+    entities::{
+        organization::Organization,
+        organization_user::{
+            OrganizationPermission, OrganizationUser,
+            organization_user_gateway::{GatewayFuture, OrganizationUserGateway},
+        },
+        user::User,
+    },
+    error::UserAlreadyPartOfOrganizationError,
 };
 use crate::infrastructure::transaction::sqlx_transaction_manager::current_connection;
-use sqlx::types::Json;
+use sqlx::{Row, types::Json};
 
 #[derive(Clone, Default)]
 pub struct SqlxOrganizationUserGateway;
@@ -15,14 +22,43 @@ impl SqlxOrganizationUserGateway {
 }
 
 impl OrganizationUserGateway for SqlxOrganizationUserGateway {
+    fn find_one_by_organization_and_user<'a>(
+        &'a self,
+        organization: &'a Organization,
+        user: &'a User,
+    ) -> GatewayFuture<'a, Option<OrganizationUser>> {
+        Box::pin(async move {
+            let connection = current_connection()?;
+            let mut connection = connection.lock().await;
+            let row = sqlx::query(
+                "SELECT permissions FROM organization_user WHERE organization_id = $1 AND user_id = $2",
+            )
+            .bind(organization.id)
+            .bind(user.id)
+            .fetch_optional(&mut **connection)
+            .await?;
+
+            row.map(|row| {
+                let permissions: Json<Vec<OrganizationPermission>> = row.try_get("permissions")?;
+                Ok(OrganizationUser {
+                    organization: organization.clone(),
+                    user: user.clone(),
+                    permissions: permissions.0,
+                })
+            })
+            .transpose()
+        })
+    }
+
     fn save<'a>(&'a self, organization_user: &'a OrganizationUser) -> GatewayFuture<'a, ()> {
         Box::pin(async move {
             let connection = current_connection()?;
             let mut connection = connection.lock().await;
-            sqlx::query(
+            let result = sqlx::query(
                 r#"
                 INSERT INTO organization_user (organization_id, user_id, permissions)
                 VALUES ($1, $2, $3)
+                ON CONFLICT (organization_id, user_id) DO NOTHING
                 "#,
             )
             .bind(organization_user.organization.id)
@@ -30,6 +66,10 @@ impl OrganizationUserGateway for SqlxOrganizationUserGateway {
             .bind(Json(&organization_user.permissions))
             .execute(&mut **connection)
             .await?;
+
+            if result.rows_affected() == 0 {
+                return Err(UserAlreadyPartOfOrganizationError.into());
+            }
 
             Ok(())
         })
@@ -60,6 +100,12 @@ mod tests {
         let user = UserBuilder::init().build();
         let membership = OrganizationUser::new(&organization, &user);
 
+        assert!(matches!(
+            gateway
+                .find_one_by_organization_and_user(&organization, &user)
+                .await,
+            Err(OrganizationUserGatewayError::Unexpected(_))
+        ));
         assert!(matches!(
             gateway.save(&membership).await,
             Err(OrganizationUserGatewayError::Unexpected(_))

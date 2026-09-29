@@ -57,6 +57,9 @@ impl From<OrganizationGatewayError> for CreateOrganizationError {
 impl From<OrganizationUserGatewayError> for CreateOrganizationError {
     fn from(error: OrganizationUserGatewayError) -> Self {
         match error {
+            OrganizationUserGatewayError::UserAlreadyPartOfOrganization(_) => {
+                UnexpectedError.into()
+            }
             OrganizationUserGatewayError::Gateway(error) => error.into(),
             OrganizationUserGatewayError::Unexpected(error) => error.into(),
         }

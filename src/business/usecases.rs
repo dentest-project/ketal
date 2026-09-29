@@ -1,3 +1,4 @@
+pub mod add_user_to_organization;
 pub mod create_organization;
 pub mod login;
 pub mod outputs;

@@ -7,11 +7,16 @@ pub use in_memory_organization_user_gateway::InMemoryOrganizationUserGateway;
 pub use sqlx_organization_user_gateway::SqlxOrganizationUserGateway;
 
 use super::OrganizationUser;
-use crate::business::error::{GatewayError, UnexpectedError};
+use crate::business::{
+    entities::{organization::Organization, user::User},
+    error::{GatewayError, UnexpectedError, UserAlreadyPartOfOrganizationError},
+};
 use std::{future::Future, pin::Pin};
 
 #[derive(Debug, thiserror::Error)]
 pub enum OrganizationUserGatewayError {
+    #[error(transparent)]
+    UserAlreadyPartOfOrganization(#[from] UserAlreadyPartOfOrganizationError),
     #[error(transparent)]
     Gateway(#[from] GatewayError),
     #[error(transparent)]
@@ -28,5 +33,10 @@ pub type GatewayFuture<'a, T> =
     Pin<Box<dyn Future<Output = Result<T, OrganizationUserGatewayError>> + Send + 'a>>;
 
 pub trait OrganizationUserGateway: Send + Sync {
+    fn find_one_by_organization_and_user<'a>(
+        &'a self,
+        organization: &'a Organization,
+        user: &'a User,
+    ) -> GatewayFuture<'a, Option<OrganizationUser>>;
     fn save<'a>(&'a self, organization_user: &'a OrganizationUser) -> GatewayFuture<'a, ()>;
 }

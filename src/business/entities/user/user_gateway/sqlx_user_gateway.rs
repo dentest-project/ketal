@@ -14,6 +14,7 @@ use sqlx::{
         chrono::{DateTime, Utc},
     },
 };
+use uuid::Uuid;
 #[derive(Clone, Default)]
 pub struct SqlxUserGateway;
 
@@ -24,6 +25,29 @@ impl SqlxUserGateway {
 }
 
 impl UserGateway for SqlxUserGateway {
+    fn find_one_by_id(&self, id: Uuid) -> GatewayFuture<'_, Option<User>> {
+        Box::pin(async move {
+            let row = sqlx::query(
+                r#"
+                SELECT
+                    id,
+                    username,
+                    email,
+                    password,
+                    last_reset_password_request,
+                    reset_password_code
+                FROM app_user
+                WHERE id = $1
+                "#,
+            )
+            .bind(id)
+            .fetch_optional(shared_pg_pool())
+            .await?;
+
+            row.map(|row| user_from_row(&row)).transpose()
+        })
+    }
+
     fn save<'a>(&'a self, user: &'a User) -> GatewayFuture<'a, ()> {
         let id = user.id;
         let username = user.username.clone();
@@ -252,6 +276,9 @@ mod tests {
         assert_eq!(found_user.username, user.username);
         assert_eq!(found_user.email, user.email);
         assert_eq!(found_user.password, user.password);
+
+        assert_eq!(gateway.find_one_by_id(user.id).await?, Some(found_user));
+        assert!(gateway.find_one_by_id(Uuid::new_v4()).await?.is_none());
 
         let found_by_username = gateway
             .find_one_by_username(&user.username.to_uppercase())

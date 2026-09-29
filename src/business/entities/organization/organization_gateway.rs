@@ -9,6 +9,7 @@ pub use sqlx_organization_gateway::SqlxOrganizationGateway;
 use super::Organization;
 use crate::business::error::{GatewayError, OrganizationAlreadyExistsError, UnexpectedError};
 use std::{future::Future, pin::Pin};
+use uuid::Uuid;
 
 #[derive(Debug, thiserror::Error)]
 pub enum OrganizationGatewayError {
@@ -30,6 +31,7 @@ pub type GatewayResult<T> = Result<T, OrganizationGatewayError>;
 pub type GatewayFuture<'a, T> = Pin<Box<dyn Future<Output = GatewayResult<T>> + Send + 'a>>;
 
 pub trait OrganizationGateway: Send + Sync {
+    fn find_one_by_id(&self, id: Uuid) -> GatewayFuture<'_, Option<Organization>>;
     fn find_one_by_name<'a>(&'a self, name: &'a str) -> GatewayFuture<'a, Option<Organization>>;
     fn save<'a>(&'a self, organization: &'a Organization) -> GatewayFuture<'a, ()>;
 }

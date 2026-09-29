@@ -7,6 +7,7 @@ use crate::business::{
 };
 use crate::infrastructure::transaction::sqlx_transaction_manager::current_connection;
 use sqlx::Row;
+use uuid::Uuid;
 
 #[derive(Clone, Default)]
 pub struct SqlxOrganizationGateway;
@@ -18,6 +19,26 @@ impl SqlxOrganizationGateway {
 }
 
 impl OrganizationGateway for SqlxOrganizationGateway {
+    fn find_one_by_id(&self, id: Uuid) -> GatewayFuture<'_, Option<Organization>> {
+        Box::pin(async move {
+            let connection = current_connection()?;
+            let mut connection = connection.lock().await;
+            let row = sqlx::query("SELECT id, name, slug FROM organization WHERE id = $1")
+                .bind(id)
+                .fetch_optional(&mut **connection)
+                .await?;
+
+            row.map(|row| {
+                Ok(Organization {
+                    id: row.try_get("id")?,
+                    name: row.try_get("name")?,
+                    slug: row.try_get("slug")?,
+                })
+            })
+            .transpose()
+        })
+    }
+
     fn find_one_by_name<'a>(&'a self, name: &'a str) -> GatewayFuture<'a, Option<Organization>> {
         Box::pin(async move {
             let connection = current_connection()?;
@@ -84,6 +105,10 @@ mod tests {
             .with_name("Dental Team".to_owned())
             .build();
 
+        assert!(matches!(
+            gateway.find_one_by_id(organization.id).await,
+            Err(OrganizationGatewayError::Unexpected(_))
+        ));
         assert!(matches!(
             gateway.find_one_by_name("Dental Team").await,
             Err(OrganizationGatewayError::Unexpected(_))

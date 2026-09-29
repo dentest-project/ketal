@@ -1,23 +1,29 @@
 mod gateway_error;
 mod invalid_credentials_error;
 mod organization_already_exists_error;
+mod organization_not_found_error;
 mod password_decoder_error;
 mod password_encoder_error;
 mod reset_password_request_too_early_error;
 mod token_generator_error;
 mod unexpected_error;
 mod user_already_exists_error;
+mod user_already_part_of_organization_error;
+mod user_not_allowed_to_administrate_organization_error;
 mod user_not_found_error;
 
 pub(crate) use gateway_error::GatewayError;
 pub(crate) use invalid_credentials_error::InvalidCredentialsError;
 pub(crate) use organization_already_exists_error::OrganizationAlreadyExistsError;
+pub(crate) use organization_not_found_error::OrganizationNotFoundError;
 pub(crate) use password_decoder_error::PasswordDecoderError;
 pub(crate) use password_encoder_error::PasswordEncoderError;
 pub(crate) use reset_password_request_too_early_error::ResetPasswordRequestTooEarlyError;
 pub(crate) use token_generator_error::TokenGeneratorError;
 pub(crate) use unexpected_error::UnexpectedError;
 pub(crate) use user_already_exists_error::UserAlreadyExistsError;
+pub(crate) use user_already_part_of_organization_error::UserAlreadyPartOfOrganizationError;
+pub(crate) use user_not_allowed_to_administrate_organization_error::UserNotAllowedToAdministrateOrganizationError;
 pub(crate) use user_not_found_error::UserNotFoundError;
 
 macro_rules! use_case_error {

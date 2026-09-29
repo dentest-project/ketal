@@ -2,9 +2,68 @@
   "openrpc": "1.3.2",
   "info": {
     "title": "Dentest Ketal JSON-RPC Documentation",
-    "version": "0.9.0"
+    "version": "0.10.0"
   },
   "methods": [
+    {
+      "name": "AddUserToOrganization",
+      "summary": "Add a user to an organization.",
+      "description": "The authenticated user must have the right to administrate the organization. The user is added without permissions.",
+      "params": [
+        {
+          "name": "organizationId",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        },
+        {
+          "name": "userId",
+          "required": true,
+          "schema": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      ],
+      "result": {
+        "name": "organizationUser",
+        "schema": {
+          "$ref": "#/components/schemas/OrganizationUserDetailedOutput"
+        }
+      },
+      "errors": [
+        {
+          "code": -32001,
+          "message": "Access denied"
+        },
+        {
+          "code": 20013,
+          "message": "UserNotAllowedToAdministrateOrganization"
+        },
+        {
+          "code": 20012,
+          "message": "UserAlreadyPartOfOrganization"
+        },
+        {
+          "code": 20011,
+          "message": "OrganizationNotFound"
+        },
+        {
+          "code": 20007,
+          "message": "UserNotFound"
+        },
+        {
+          "code": 20002,
+          "message": "GatewayError"
+        },
+        {
+          "code": 20009,
+          "message": "UnexpectedError"
+        }
+      ]
+    },
     {
       "name": "CreateOrganization",
       "summary": "Create an organization.",
@@ -332,6 +391,35 @@
   ],
   "components": {
     "schemas": {
+      "OrganizationUserDetailedOutput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "organization",
+          "user",
+          "permissions"
+        ],
+        "properties": {
+          "organization": {
+            "$ref": "#/components/schemas/OrganizationDetailedOutput"
+          },
+          "user": {
+            "$ref": "#/components/schemas/UserDetailedOutput"
+          },
+          "permissions": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "enum": [
+                "admin",
+                "project_create",
+                "project_write",
+                "read"
+              ]
+            }
+          }
+        }
+      },
       "OrganizationDetailedOutput": {
         "type": "object",
         "additionalProperties": false,

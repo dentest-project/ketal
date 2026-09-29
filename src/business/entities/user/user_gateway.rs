@@ -9,12 +9,14 @@ pub use sqlx_user_gateway::SqlxUserGateway;
 use super::User;
 use crate::business::error::GatewayError;
 use std::{future::Future, pin::Pin};
+use uuid::Uuid;
 
 pub type GatewayResult<T> = Result<T, GatewayError>;
 pub type GatewayFuture<'a, T> = Pin<Box<dyn Future<Output = GatewayResult<T>> + Send + 'a>>;
 
 pub trait UserGateway: Send + Sync {
     fn save<'a>(&'a self, user: &'a User) -> GatewayFuture<'a, ()>;
+    fn find_one_by_id(&self, id: Uuid) -> GatewayFuture<'_, Option<User>>;
     fn find_one_by_username<'a>(&'a self, username: &'a str) -> GatewayFuture<'a, Option<User>>;
     fn find_one_by_email_or_username<'a>(
         &'a self,

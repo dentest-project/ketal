@@ -1,0 +1,3 @@
+mod organization_user_detailed_output;
+
+pub use organization_user_detailed_output::OrganizationUserDetailedOutput;

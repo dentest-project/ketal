@@ -14,6 +14,17 @@ pub struct InMemoryOrganizationGateway {
 }
 
 impl OrganizationGateway for InMemoryOrganizationGateway {
+    fn find_one_by_id(&self, id: Uuid) -> GatewayFuture<'_, Option<Organization>> {
+        Box::pin(async move {
+            Ok(self
+                .organizations
+                .lock()
+                .map_err(|error| GatewayError::new(error.to_string()))?
+                .get(&id)
+                .cloned())
+        })
+    }
+
     fn find_one_by_name<'a>(&'a self, name: &'a str) -> GatewayFuture<'a, Option<Organization>> {
         Box::pin(async move {
             let name = name.to_lowercase();

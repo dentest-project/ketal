@@ -14,6 +14,17 @@ pub struct InMemoryUserGateway {
 }
 
 impl UserGateway for InMemoryUserGateway {
+    fn find_one_by_id(&self, id: Uuid) -> GatewayFuture<'_, Option<User>> {
+        Box::pin(async move {
+            Ok(self
+                .users
+                .lock()
+                .map_err(|error| GatewayError::new(error.to_string()))?
+                .get(&id)
+                .cloned())
+        })
+    }
+
     fn save<'a>(&'a self, user: &'a User) -> GatewayFuture<'a, ()> {
         let user = user.clone();
 
