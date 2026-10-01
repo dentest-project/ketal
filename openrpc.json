@@ -2,7 +2,7 @@
   "openrpc": "1.3.2",
   "info": {
     "title": "Dentest Ketal JSON-RPC Documentation",
-    "version": "0.10.0"
+    "version": "0.11.0"
   },
   "methods": [
     {
@@ -94,6 +94,32 @@
         {
           "code": 20010,
           "message": "OrganizationAlreadyExists"
+        },
+        {
+          "code": 20002,
+          "message": "GatewayError"
+        },
+        {
+          "code": 20009,
+          "message": "UnexpectedError"
+        }
+      ]
+    },
+    {
+      "name": "ListMyOrganizations",
+      "summary": "List the organizations the authenticated user belongs to.",
+      "description": "The user must be authenticated. No organization permissions are required.",
+      "params": [],
+      "result": {
+        "name": "organizations",
+        "schema": {
+          "$ref": "#/components/schemas/OrganizationListOutput"
+        }
+      },
+      "errors": [
+        {
+          "code": -32001,
+          "message": "Access denied"
         },
         {
           "code": 20002,
@@ -421,6 +447,32 @@
         }
       },
       "OrganizationDetailedOutput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ],
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
+      "OrganizationListOutput": {
+        "type": "array",
+        "items": {
+          "$ref": "#/components/schemas/OrganizationListItemOutput"
+        }
+      },
+      "OrganizationListItemOutput": {
         "type": "object",
         "additionalProperties": false,
         "required": [

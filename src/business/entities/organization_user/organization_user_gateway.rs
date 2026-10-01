@@ -33,6 +33,7 @@ pub type GatewayFuture<'a, T> =
     Pin<Box<dyn Future<Output = Result<T, OrganizationUserGatewayError>> + Send + 'a>>;
 
 pub trait OrganizationUserGateway: Send + Sync {
+    fn find_by_user<'a>(&'a self, user: &'a User) -> GatewayFuture<'a, Vec<Organization>>;
     fn find_one_by_organization_and_user<'a>(
         &'a self,
         organization: &'a Organization,

@@ -1,6 +1,8 @@
 use crate::business::{
     entities::{
-        organization::Organization,
+        organization::{
+            Organization, organization_gateway::sqlx_organization_gateway::organization_from_row,
+        },
         organization_user::{
             OrganizationPermission, OrganizationUser,
             organization_user_gateway::{GatewayFuture, OrganizationUserGateway},
@@ -22,6 +24,29 @@ impl SqlxOrganizationUserGateway {
 }
 
 impl OrganizationUserGateway for SqlxOrganizationUserGateway {
+    fn find_by_user<'a>(&'a self, user: &'a User) -> GatewayFuture<'a, Vec<Organization>> {
+        Box::pin(async move {
+            let connection = current_connection()?;
+            let mut connection = connection.lock().await;
+            let rows = sqlx::query(
+                r#"
+                SELECT organization.id, organization.name, organization.slug
+                FROM organization
+                INNER JOIN organization_user ON organization_user.organization_id = organization.id
+                WHERE organization_user.user_id = $1
+                "#,
+            )
+            .bind(user.id)
+            .fetch_all(&mut **connection)
+            .await?;
+
+            rows.iter()
+                .map(organization_from_row)
+                .collect::<Result<Vec<_>, _>>()
+                .map_err(Into::into)
+        })
+    }
+
     fn find_one_by_organization_and_user<'a>(
         &'a self,
         organization: &'a Organization,
@@ -100,6 +125,10 @@ mod tests {
         let user = UserBuilder::init().build();
         let membership = OrganizationUser::new(&organization, &user);
 
+        assert!(matches!(
+            gateway.find_by_user(&user).await,
+            Err(OrganizationUserGatewayError::Unexpected(_))
+        ));
         assert!(matches!(
             gateway
                 .find_one_by_organization_and_user(&organization, &user)

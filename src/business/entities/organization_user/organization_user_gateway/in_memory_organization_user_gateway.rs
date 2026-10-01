@@ -20,6 +20,19 @@ pub struct InMemoryOrganizationUserGateway {
 }
 
 impl OrganizationUserGateway for InMemoryOrganizationUserGateway {
+    fn find_by_user<'a>(&'a self, user: &'a User) -> GatewayFuture<'a, Vec<Organization>> {
+        Box::pin(async move {
+            Ok(self
+                .organization_users
+                .lock()
+                .map_err(|error| GatewayError::new(error.to_string()))?
+                .values()
+                .filter(|membership| membership.user.id == user.id)
+                .map(|membership| membership.organization.clone())
+                .collect())
+        })
+    }
+
     fn find_one_by_organization_and_user<'a>(
         &'a self,
         organization: &'a Organization,

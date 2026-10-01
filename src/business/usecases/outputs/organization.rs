@@ -1,3 +1,7 @@
 mod organization_detailed_output;
+mod organization_list_item_output;
+mod organization_list_output;
 
 pub use organization_detailed_output::OrganizationDetailedOutput;
+pub use organization_list_item_output::OrganizationListItemOutput;
+pub use organization_list_output::OrganizationListOutput;

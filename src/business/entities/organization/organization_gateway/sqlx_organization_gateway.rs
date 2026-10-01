@@ -6,7 +6,7 @@ use crate::business::{
     error::OrganizationAlreadyExistsError,
 };
 use crate::infrastructure::transaction::sqlx_transaction_manager::current_connection;
-use sqlx::Row;
+use sqlx::{Row, postgres::PgRow};
 use uuid::Uuid;
 
 #[derive(Clone, Default)]
@@ -28,14 +28,10 @@ impl OrganizationGateway for SqlxOrganizationGateway {
                 .fetch_optional(&mut **connection)
                 .await?;
 
-            row.map(|row| {
-                Ok(Organization {
-                    id: row.try_get("id")?,
-                    name: row.try_get("name")?,
-                    slug: row.try_get("slug")?,
-                })
-            })
-            .transpose()
+            row.as_ref()
+                .map(organization_from_row)
+                .transpose()
+                .map_err(Into::into)
         })
     }
 
@@ -50,14 +46,10 @@ impl OrganizationGateway for SqlxOrganizationGateway {
             .fetch_optional(&mut **connection)
             .await?;
 
-            row.map(|row| {
-                Ok(Organization {
-                    id: row.try_get("id")?,
-                    name: row.try_get("name")?,
-                    slug: row.try_get("slug")?,
-                })
-            })
-            .transpose()
+            row.as_ref()
+                .map(organization_from_row)
+                .transpose()
+                .map_err(Into::into)
         })
     }
 
@@ -85,6 +77,14 @@ impl OrganizationGateway for SqlxOrganizationGateway {
             Ok(())
         })
     }
+}
+
+pub(crate) fn organization_from_row(row: &PgRow) -> Result<Organization, sqlx::Error> {
+    Ok(Organization {
+        id: row.try_get("id")?,
+        name: row.try_get("name")?,
+        slug: row.try_get("slug")?,
+    })
 }
 
 #[cfg(test)]
