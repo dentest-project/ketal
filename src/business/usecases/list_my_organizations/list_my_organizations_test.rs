@@ -46,8 +46,7 @@ async fn lists_only_the_users_organizations_regardless_of_permissions() -> Resul
     }
 
     let organizations = use_case.retrieve_organizations(&user).await?;
-    let mut output = OrganizationListOutput::from(organizations.as_slice());
-    output.0.sort_by(|left, right| left.name.cmp(&right.name));
+    let output = OrganizationListOutput::from(organizations.as_slice());
 
     assert_eq!(
         output,
@@ -70,6 +69,49 @@ async fn lists_only_the_users_organizations_regardless_of_permissions() -> Resul
                 "slug": "dental-team"
             }
         ])
+    );
+    Ok(())
+}
+
+#[tokio::test]
+async fn retrieves_organizations_in_case_insensitive_alphabetical_order()
+-> Result<(), Box<dyn Error>> {
+    let use_case = use_case();
+    let user = UserBuilder::init().build();
+    for name in [
+        "zeta Team",
+        "Bravo Team",
+        "alpha Team",
+        "dEntal Team",
+        "ALPINE Team",
+        "bETA Team",
+    ] {
+        let organization = OrganizationBuilder::init()
+            .with_name(name.to_owned())
+            .build();
+        use_case
+            .organization_user_gateway
+            .save(&OrganizationUser::new(&organization, &user))
+            .await?;
+    }
+
+    let organizations = use_case.retrieve_organizations(&user).await?;
+    let output = OrganizationListOutput::from(organizations.as_slice());
+
+    assert_eq!(
+        output
+            .0
+            .iter()
+            .map(|item| item.name.as_str())
+            .collect::<Vec<_>>(),
+        [
+            "alpha Team",
+            "ALPINE Team",
+            "bETA Team",
+            "Bravo Team",
+            "dEntal Team",
+            "zeta Team",
+        ]
     );
     Ok(())
 }

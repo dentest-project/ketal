@@ -34,6 +34,7 @@ impl OrganizationUserGateway for SqlxOrganizationUserGateway {
                 FROM organization
                 INNER JOIN organization_user ON organization_user.organization_id = organization.id
                 WHERE organization_user.user_id = $1
+                ORDER BY LOWER(organization.name), organization.id
                 "#,
             )
             .bind(user.id)

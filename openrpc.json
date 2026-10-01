@@ -108,7 +108,7 @@
     {
       "name": "ListMyOrganizations",
       "summary": "List the organizations the authenticated user belongs to.",
-      "description": "The user must be authenticated. No organization permissions are required.",
+      "description": "The user must be authenticated. No organization permissions are required. Organizations are ordered alphabetically by name.",
       "params": [],
       "result": {
         "name": "organizations",

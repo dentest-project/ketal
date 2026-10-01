@@ -19,17 +19,21 @@ pub struct InMemoryOrganizationUserGateway {
     organization_users: Mutex<OrganizationUsers>,
 }
 
+#[cfg(test)]
 impl OrganizationUserGateway for InMemoryOrganizationUserGateway {
     fn find_by_user<'a>(&'a self, user: &'a User) -> GatewayFuture<'a, Vec<Organization>> {
         Box::pin(async move {
-            Ok(self
+            let mut organizations: Vec<_> = self
                 .organization_users
                 .lock()
                 .map_err(|error| GatewayError::new(error.to_string()))?
                 .values()
                 .filter(|membership| membership.user.id == user.id)
                 .map(|membership| membership.organization.clone())
-                .collect())
+                .collect();
+            organizations.sort();
+
+            Ok(organizations)
         })
     }
 
