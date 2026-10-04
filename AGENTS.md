@@ -37,6 +37,11 @@
 - Give an entity or relationship its own presenter, following the existing `*_presenter.rs` and `usecases/outputs` conventions.
 - Compose nested outputs through the existing presenters instead of duplicating their field mapping. An organization-user detailed presenter combines the organization's detailed output, the user's detailed output, and the membership's permissions.
 
+## Gateway Retrieval
+
+- Load complete entities, including related entities, from persistence.
+- When needed, apply filters in database queries and make them explicit in gateway method names.
+
 ## OpenRPC Maintenance
 
 When creating, updating, renaming, or deleting a use case under `src/business/usecases`, update `openrpc.json` in the same change.

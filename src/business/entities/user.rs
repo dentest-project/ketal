@@ -18,6 +18,7 @@ pub struct User {
     username: String,
     email: String,
     password: String,
+    roles: Vec<String>,
     last_reset_password_request: Option<SystemTime>,
     reset_password_code: Option<String>,
 }

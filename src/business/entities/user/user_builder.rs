@@ -31,6 +31,7 @@ impl EntityBuilder<User> for UserBuilder {
                 username: String::new(),
                 email: String::new(),
                 password: String::new(),
+                roles: vec!["ROLE_USER".to_owned()],
                 last_reset_password_request: None,
                 reset_password_code: None,
             },

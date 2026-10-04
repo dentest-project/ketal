@@ -5,7 +5,6 @@ use crate::{
     },
     database::shared_pg_pool,
 };
-use serde_json::json;
 use sqlx::{
     Row,
     postgres::PgRow,
@@ -34,6 +33,7 @@ impl UserGateway for SqlxUserGateway {
                     username,
                     email,
                     password,
+                    roles,
                     last_reset_password_request,
                     reset_password_code
                 FROM app_user
@@ -53,6 +53,7 @@ impl UserGateway for SqlxUserGateway {
         let username = user.username.clone();
         let email = user.email.clone();
         let password = user.password.clone();
+        let roles = user.roles.clone();
         let last_reset_password_request =
             user.last_reset_password_request.map(DateTime::<Utc>::from);
         let reset_password_code = user.reset_password_code.clone();
@@ -75,6 +76,7 @@ impl UserGateway for SqlxUserGateway {
                     username = EXCLUDED.username,
                     email = EXCLUDED.email,
                     password = EXCLUDED.password,
+                    roles = EXCLUDED.roles,
                     last_reset_password_request = EXCLUDED.last_reset_password_request,
                     reset_password_code = EXCLUDED.reset_password_code
                 "#,
@@ -83,7 +85,7 @@ impl UserGateway for SqlxUserGateway {
             .bind(username)
             .bind(email)
             .bind(password)
-            .bind(Json(json!(["ROLE_USER"])))
+            .bind(Json(roles))
             .bind(last_reset_password_request)
             .bind(reset_password_code)
             .execute(shared_pg_pool())
@@ -102,6 +104,7 @@ impl UserGateway for SqlxUserGateway {
                     username,
                     email,
                     password,
+                    roles,
                     last_reset_password_request,
                     reset_password_code
                 FROM app_user
@@ -130,6 +133,7 @@ impl UserGateway for SqlxUserGateway {
                     username,
                     email,
                     password,
+                    roles,
                     last_reset_password_request,
                     reset_password_code
                 FROM app_user
@@ -162,6 +166,7 @@ impl UserGateway for SqlxUserGateway {
                     username,
                     email,
                     password,
+                    roles,
                     last_reset_password_request,
                     reset_password_code
                 FROM app_user
@@ -192,6 +197,7 @@ impl UserGateway for SqlxUserGateway {
                     username,
                     email,
                     password,
+                    roles,
                     last_reset_password_request,
                     reset_password_code
                 FROM app_user
@@ -208,12 +214,13 @@ impl UserGateway for SqlxUserGateway {
     }
 }
 
-fn user_from_row(row: &PgRow) -> GatewayResult<User> {
+pub(crate) fn user_from_row(row: &PgRow) -> GatewayResult<User> {
     Ok(User {
         id: row.try_get("id")?,
         username: row.try_get("username")?,
         email: row.try_get("email")?,
         password: row.try_get("password")?,
+        roles: row.try_get::<Json<Vec<String>>, _>("roles")?.0,
         last_reset_password_request: row
             .try_get::<Option<DateTime<Utc>>, _>("last_reset_password_request")?
             .map(Into::into),
@@ -232,7 +239,11 @@ mod tests {
         database::shared_pg_pool,
     };
     use sqlx::Row;
-    use std::{error::Error, io};
+    use std::{
+        error::Error,
+        io,
+        time::{Duration, SystemTime},
+    };
     use uuid::Uuid;
 
     #[tokio::test]
@@ -245,6 +256,9 @@ mod tests {
             .build();
         let reset_password_code = format!("reset-{suffix}");
         user.define_reset_password_code(reset_password_code.clone());
+        user.last_reset_password_request =
+            Some(SystemTime::UNIX_EPOCH + Duration::from_secs(1_700_000_000));
+        user.roles.push("ROLE_ADMIN".to_owned());
 
         let gateway = SqlxUserGateway::new();
 
@@ -272,10 +286,7 @@ mod tests {
                 io::Error::other("saved user should be found by email without matching case")
             })?;
 
-        assert_eq!(found_user.id, user.id);
-        assert_eq!(found_user.username, user.username);
-        assert_eq!(found_user.email, user.email);
-        assert_eq!(found_user.password, user.password);
+        assert_eq!(found_user, user);
 
         assert_eq!(gateway.find_one_by_id(user.id).await?, Some(found_user));
         assert!(gateway.find_one_by_id(Uuid::new_v4()).await?.is_none());
@@ -287,25 +298,30 @@ mod tests {
                 io::Error::other("saved user should be found by username without matching case")
             })?;
 
-        assert_eq!(found_by_username.id, user.id);
-        assert_eq!(found_by_username.username, user.username);
-        assert_eq!(found_by_username.email, user.email);
-        assert_eq!(found_by_username.password, user.password);
+        assert_eq!(found_by_username, user);
 
         let excluded_user = gateway
             .find_one_by_email_or_username_excluding_user(&user.email, &user.username, &user)
             .await?;
         assert!(excluded_user.is_none());
 
+        assert_eq!(
+            gateway
+                .find_one_by_email_or_username_excluding_user(
+                    &user.email,
+                    &user.username,
+                    &UserBuilder::init().build(),
+                )
+                .await?,
+            Some(user.clone())
+        );
+
         let found_by_reset_password_code = gateway
             .find_one_by_reset_password_code(&reset_password_code)
             .await?
             .ok_or_else(|| io::Error::other("saved user should be found by reset password code"))?;
 
-        assert_eq!(found_by_reset_password_code.id, user.id);
-        assert_eq!(found_by_reset_password_code.username, user.username);
-        assert_eq!(found_by_reset_password_code.email, user.email);
-        assert_eq!(found_by_reset_password_code.password, user.password);
+        assert_eq!(found_by_reset_password_code, user);
 
         sqlx::query("DELETE FROM app_user WHERE id = $1")
             .bind(user.id)

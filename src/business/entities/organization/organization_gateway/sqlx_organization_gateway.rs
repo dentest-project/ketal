@@ -29,7 +29,7 @@ impl OrganizationGateway for SqlxOrganizationGateway {
                 .await?;
 
             row.as_ref()
-                .map(organization_from_row)
+                .map(|row| organization_from_row(row, ""))
                 .transpose()
                 .map_err(Into::into)
         })
@@ -47,7 +47,7 @@ impl OrganizationGateway for SqlxOrganizationGateway {
             .await?;
 
             row.as_ref()
-                .map(organization_from_row)
+                .map(|row| organization_from_row(row, ""))
                 .transpose()
                 .map_err(Into::into)
         })
@@ -79,11 +79,14 @@ impl OrganizationGateway for SqlxOrganizationGateway {
     }
 }
 
-pub(crate) fn organization_from_row(row: &PgRow) -> Result<Organization, sqlx::Error> {
+pub(crate) fn organization_from_row(
+    row: &PgRow,
+    prefix: &str,
+) -> Result<Organization, sqlx::Error> {
     Ok(Organization {
-        id: row.try_get("id")?,
-        name: row.try_get("name")?,
-        slug: row.try_get("slug")?,
+        id: row.try_get(format!("{prefix}id").as_str())?,
+        name: row.try_get(format!("{prefix}name").as_str())?,
+        slug: row.try_get(format!("{prefix}slug").as_str())?,
     })
 }
 
