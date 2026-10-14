@@ -3,8 +3,9 @@ use crate::business::{
     EntityBuilder,
     entities::{
         organization::OrganizationBuilder,
+        path::PathBuilder,
         project::{
-            Project, ProjectBuilder,
+            Project, ProjectBuilder, ProjectVisibility,
             project_gateway::{GatewayFuture, InMemoryProjectGateway, ProjectGateway},
         },
         user::{User, UserBuilder},
@@ -15,6 +16,7 @@ use crate::business::{
 use jsonrpc_usecase::UseCaseExecutionError;
 use serde_json::json;
 use std::{error::Error, sync::Arc};
+use uuid::Uuid;
 
 #[tokio::test]
 async fn lists_only_the_users_projects_without_an_organization_in_alphabetical_order()
@@ -22,8 +24,15 @@ async fn lists_only_the_users_projects_without_an_organization_in_alphabetical_o
     let user = UserBuilder::init().build();
     let other_user = UserBuilder::init().build();
     let organization = OrganizationBuilder::init().build();
+    let root_path_id = Uuid::new_v4();
+    let root_path = PathBuilder::init()
+        .with_id(root_path_id)
+        .with_path("Root path".to_owned())
+        .build();
     let first_project = ProjectBuilder::init()
         .with_title("alpha Project".to_owned())
+        .with_visibility(ProjectVisibility::Public)
+        .with_root_path(&root_path)
         .build();
     let second_project = ProjectBuilder::init()
         .with_title("Bravo Project".to_owned())
@@ -56,12 +65,20 @@ async fn lists_only_the_users_projects_without_an_organization_in_alphabetical_o
             {
                 "id": ProjectListItemOutput::from(&first_project).id,
                 "title": "alpha Project",
-                "slug": "alpha-project"
+                "slug": "alpha-project",
+                "visibility": "public",
+                "root_path": {
+                    "id": root_path_id.to_string(),
+                    "name": "Root path",
+                    "slug": "root-path"
+                }
             },
             {
                 "id": ProjectListItemOutput::from(&second_project).id,
                 "title": "Bravo Project",
-                "slug": "bravo-project"
+                "slug": "bravo-project",
+                "visibility": "private",
+                "root_path": null
             }
         ])
     );

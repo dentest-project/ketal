@@ -1,5 +1,8 @@
 use super::Project;
-use crate::business::usecases::outputs::project::{ProjectListItemOutput, ProjectListOutput};
+use crate::business::usecases::outputs::{
+    path::PathListItemOutput,
+    project::{ProjectListItemOutput, ProjectListOutput},
+};
 
 impl From<&Project> for ProjectListItemOutput {
     fn from(project: &Project) -> Self {
@@ -7,6 +10,8 @@ impl From<&Project> for ProjectListItemOutput {
             id: project.id.to_string(),
             title: project.title.clone(),
             slug: project.slug.clone(),
+            visibility: project.visibility,
+            root_path: project.root_path.as_ref().map(PathListItemOutput::from),
         }
     }
 }

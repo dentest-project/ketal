@@ -2,7 +2,7 @@
   "openrpc": "1.3.2",
   "info": {
     "title": "Dentest Ketal JSON-RPC Documentation",
-    "version": "0.12.0"
+    "version": "0.12.1"
   },
   "methods": [
     {
@@ -518,6 +518,27 @@
           }
         }
       },
+      "PathListItemOutput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "name",
+          "slug"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "name": {
+            "type": "string"
+          },
+          "slug": {
+            "type": "string"
+          }
+        }
+      },
       "ProjectListOutput": {
         "type": "array",
         "items": {
@@ -530,7 +551,9 @@
         "required": [
           "id",
           "title",
-          "slug"
+          "slug",
+          "visibility",
+          "rootPath"
         ],
         "properties": {
           "id": {
@@ -541,6 +564,24 @@
           },
           "slug": {
             "type": "string"
+          },
+          "visibility": {
+            "type": "string",
+            "enum": [
+              "public",
+              "internal",
+              "private"
+            ]
+          },
+          "rootPath": {
+            "oneOf": [
+              {
+                "$ref": "#/components/schemas/PathListItemOutput"
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },

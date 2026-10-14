@@ -8,6 +8,11 @@ pub struct PathBuilder {
 }
 
 impl PathBuilder {
+    pub fn with_id(mut self, id: Uuid) -> Self {
+        self.entity.id = id;
+        self
+    }
+
     pub fn with_path(mut self, path: String) -> Self {
         self.entity.slug = slug::slugify(&path);
         self.entity.path = path;

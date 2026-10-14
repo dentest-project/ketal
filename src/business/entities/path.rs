@@ -1,4 +1,5 @@
 pub mod path_gateway;
+pub mod path_presenter;
 
 #[cfg(test)]
 mod path_test_stub;

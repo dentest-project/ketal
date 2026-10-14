@@ -8,9 +8,11 @@ mod project_test_stub;
 pub use project_test_stub::ProjectBuilder;
 
 use super::{organization::Organization, path::Path};
+use serde::Serialize;
 use uuid::Uuid;
 
-#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+#[serde(rename_all = "snake_case")]
 pub enum ProjectVisibility {
     Public,
     Internal,
